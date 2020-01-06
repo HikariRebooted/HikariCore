@@ -5,6 +5,7 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Pass.h"
@@ -70,7 +71,7 @@ struct FunctionWrapper : public ModulePass {
     if (calledFunction == nullptr ||
         (!isa<ConstantExpr>(calledFunction) &&
          !isa<Function>(calledFunction)) ||
-        CS->getIntrinsicID() != Intrinsic::ID::not_intrinsic) {
+        CS->getIntrinsicID() != Intrinsic::not_intrinsic) {
       return nullptr;
     }
     if (Function *tmp = dyn_cast<Function>(calledFunction)) {

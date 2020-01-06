@@ -265,7 +265,7 @@ struct StringEncryption : public ModulePass {
     LoadInst *LI = IRB.CreateLoad(StatusGV, "LoadEncryptionStatus");
     LI->setAtomic(AtomicOrdering::Acquire); // Will be released at the start of
                                             // C
-    LI->setAlignment(4);
+    LI->setAlignment(llvm::Align(4));
     Value *condition = IRB.CreateICmpEQ(
         LI, ConstantInt::get(Type::getInt32Ty(Func->getContext()), 0));
     A->getTerminator()->eraseFromParent();
@@ -275,7 +275,7 @@ struct StringEncryption : public ModulePass {
     IRBuilder<> IRBC(C->getFirstNonPHIOrDbgOrLifetime());
     StoreInst *SI = IRBC.CreateStore(
         ConstantInt::get(Type::getInt32Ty(Func->getContext()), 1), StatusGV);
-    SI->setAlignment(4);
+    SI->setAlignment(llvm::Align(4));
     SI->setAtomic(AtomicOrdering::Release); // Release the lock acquired in LI
 
   } // End of HandleFunction
