@@ -2,6 +2,7 @@
 //===----------------------------------------------------------------------===//
 #include "llvm/Transforms/Obfuscation/Obfuscation.h"
 #include "llvm/Transforms/Obfuscation/CryptoUtils.h"
+#include "LegacyLowerSwitch.h"
 #include <fcntl.h>
 using namespace llvm;
 
@@ -47,7 +48,7 @@ bool Flattening::flatten(Function *f) {
   // END OF SCRAMBLER
 
   // Lower switch
-  FunctionPass *lower = createLowerSwitchPass();
+  FunctionPass *lower = createLegacyLowerSwitchPass();
   lower->runOnFunction(*f);
 
   // Save all original BB
