@@ -1,4 +1,4 @@
-// For open-source license, please refer to [License](https://github.com/HikariObfuscator/Hikari/wiki/License).
+//For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
 //===- BogusControlFlow.cpp - BogusControlFlow Obfuscation
 // pass-------------------------===//
@@ -90,11 +90,11 @@
 //
 //===----------------------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Obfuscation/BogusControlFlow.h"
+#include "Obfuscation/BogusControlFlow.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/NoFolder.h"
 #include "llvm/Support/TargetSelect.h"
-#include "llvm/Transforms/Obfuscation/Utils.h"
+#include "Obfuscation/Utils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <memory>
 

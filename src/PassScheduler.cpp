@@ -1,11 +1,18 @@
-// For open-source license, please refer to [License](https://github.com/HikariObfuscator/Hikari/wiki/License).
+//For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
 /*
   Hikari 's own "Pass Scheduler".
   Because currently there is no way to add dependency to transform passes
   Ref : http://lists.llvm.org/pipermail/llvm-dev/2011-February/038109.html
 */
-#include "llvm/Transforms/Obfuscation/Obfuscation.h"
+#include "llvm/IR/Function.h"
+#include "llvm/Pass.h"
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/PassPlugin.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/IPO/PassManagerBuilder.h"
+
+#include "Obfuscation/Obfuscation.h"
 #include <iostream>
 using namespace llvm;
 using namespace std;
@@ -106,7 +113,7 @@ struct Obfuscation : public ModulePass {
     ModulePass *MP = createStringEncryptionPass(EnableAllObfuscation ||
                                     EnableStringEncryption);
     MP->runOnModule(M);
-    delete MP;
+    delete MP; 
     /*
     // Placing FW here does provide the most obfuscation however the compile
     time
@@ -174,6 +181,7 @@ struct Obfuscation : public ModulePass {
     return true;
   } // End runOnModule
 };
+
 ModulePass *createObfuscationPass() {
   LoadEnv();
   if (AesSeed!=0x1337) {
@@ -186,6 +194,8 @@ ModulePass *createObfuscationPass() {
   return new Obfuscation();
 }
 } // namespace llvm
+
+
 char Obfuscation::ID = 0;
 INITIALIZE_PASS_BEGIN(Obfuscation, "obfus", "Enable Obfuscation", true, true)
 INITIALIZE_PASS_DEPENDENCY(AntiClassDump);
@@ -195,5 +205,5 @@ INITIALIZE_PASS_DEPENDENCY(FunctionCallObfuscate);
 INITIALIZE_PASS_DEPENDENCY(IndirectBranch);
 INITIALIZE_PASS_DEPENDENCY(SplitBasicBlock);
 INITIALIZE_PASS_DEPENDENCY(StringEncryption);
-INITIALIZE_PASS_DEPENDENCY(Substitution);
+INITIALIZE_PASS_DEPENDENCY(Substitution); 
 INITIALIZE_PASS_END(Obfuscation, "obfus", "Enable Obfuscation", true, true)

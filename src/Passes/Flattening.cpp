@@ -1,7 +1,7 @@
-// For open-source license, please refer to [License](https://github.com/HikariObfuscator/Hikari/wiki/License).
+//For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
-#include "llvm/Transforms/Obfuscation/Obfuscation.h"
-#include "llvm/Transforms/Obfuscation/CryptoUtils.h"
+#include "Obfuscation/Obfuscation.h"
+#include "Obfuscation/CryptoUtils.h"
 #include "LegacyLowerSwitch.h"
 #include <fcntl.h>
 using namespace llvm;

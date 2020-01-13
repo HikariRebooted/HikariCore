@@ -1,4 +1,4 @@
-// For open-source license, please refer to [License](https://github.com/HikariObfuscator/Hikari/wiki/License).
+//For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilder.h"
@@ -9,7 +9,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Obfuscation/Obfuscation.h"
+#include "Obfuscation/Obfuscation.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 using namespace llvm;
 using namespace std;

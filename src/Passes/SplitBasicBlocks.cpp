@@ -1,8 +1,8 @@
-// For open-source license, please refer to [License](https://github.com/HikariObfuscator/Hikari/wiki/License).
+//For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
-#include "llvm/Transforms/Obfuscation/CryptoUtils.h"
-#include "llvm/Transforms/Obfuscation/Split.h"
-#include "llvm/Transforms/Obfuscation/Utils.h"
+#include "Obfuscation/CryptoUtils.h"
+#include "Obfuscation/Split.h"
+#include "Obfuscation/Utils.h"
 
 #define DEBUG_TYPE "split"
 
@@ -101,7 +101,7 @@ void SplitBasicBlock::split(Function *f) {
     BasicBlock::iterator it = curr->begin();
     BasicBlock *toSplit = curr;
     int last = 0;
-    for (int i = 0; i < splitN; ++i) {
+    for (int i = 0; i < splitN - 1; ++i) {
       for (int j = 0; j < test[i] - last; ++j) {
         ++it;
       }

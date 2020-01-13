@@ -1,6 +1,6 @@
-// For open-source license, please refer to [License](https://github.com/HikariObfuscator/Hikari/wiki/License). 
+//For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
-#include "llvm/Transforms/Obfuscation/Utils.h"
+#include "Obfuscation/Utils.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Module.h"

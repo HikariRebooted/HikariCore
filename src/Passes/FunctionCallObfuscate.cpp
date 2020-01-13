@@ -1,4 +1,4 @@
-// For open-source license, please refer to [License](https://github.com/HikariObfuscator/Hikari/wiki/License).
+//For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
 #include "json.hpp"
 #include "llvm/ADT/Triple.h"
@@ -12,7 +12,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Obfuscation/Obfuscation.h"
+#include "Obfuscation/Obfuscation.h"
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
@@ -209,7 +209,7 @@ struct FunctionCallObfuscate : public FunctionPass {
       return false;
     }
     Triple Tri(F.getParent()->getTargetTriple());
-    if (!Tri.isAndroid() && !Tri.isOSDarwin()) {
+    if (!Tri.isAndroid() && !Tri.isOSDarwin() &&!(Tri.getOS() == Triple::Linux)) {
       errs() << "Unsupported Target Triple:"<< F.getParent()->getTargetTriple() << "\n";
       return false;
     }
@@ -225,10 +225,17 @@ struct FunctionCallObfuscate : public FunctionPass {
         false); // int has a length of 32 on both 32/64bit platform
     FunctionType *dlsym_type =
         FunctionType::get(Int8PtrTy, {Int8PtrTy, Int8PtrTy}, false);
+#if LLVM_VERSION_MAJOR >= 9
     Function *dlopen_decl =
         cast<Function>(M->getOrInsertFunction("dlopen", dlopen_type).getCallee());
     Function *dlsym_decl =
         cast<Function>((M->getOrInsertFunction("dlsym", dlsym_type)).getCallee());
+#else
+    Function *dlopen_decl =
+        cast<Function>(M->getOrInsertFunction("dlopen", dlopen_type));
+    Function *dlsym_decl =
+        cast<Function>((M->getOrInsertFunction("dlsym", dlsym_type)));
+#endif
     // Begin Iteration
     for (BasicBlock &BB : F) {
       for (auto I = BB.getFirstInsertionPt(), end = BB.end(); I != end; ++I) {
@@ -284,7 +291,14 @@ struct FunctionCallObfuscate : public FunctionPass {
                 dlopen_flag=ANDROID32_FLAG;
               }
 
-            } else {
+            } else if(Tri.getOS() == Triple::Linux) {
+	      if (Tri.isArch64Bit()) {
+                dlopen_flag=ANDROID64_FLAG;
+              } else {
+                dlopen_flag=ANDROID32_FLAG;
+              }
+	    } 
+	     else {
               errs() << "[FunctionCallObfuscate]Unsupported Target Triple:"
                          << F.getParent()->getTargetTriple() << "\n";
               errs()<<"[FunctionCallObfuscate]Applying Default Signature:"<<dlopen_flag<<"\n";

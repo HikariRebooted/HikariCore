@@ -1,4 +1,4 @@
-// For open-source license, please refer to [License](https://github.com/HikariObfuscator/Hikari/wiki/License).
+//For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
@@ -9,7 +9,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Pass.h"
-#include "llvm/Transforms/Obfuscation/Obfuscation.h"
+#include "Obfuscation/Obfuscation.h"
 #include <cstdlib>
 #include <fstream>
 #include <iostream>

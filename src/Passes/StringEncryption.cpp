@@ -1,6 +1,6 @@
-// For open-source license, please refer to [License](https://github.com/HikariObfuscator/Hikari/wiki/License).
+//For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
-#include "llvm/Transforms/Obfuscation/StringEncryption.h"
+#include "Obfuscation/StringEncryption.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
@@ -12,9 +12,9 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
-#include "llvm/Transforms/Obfuscation/CryptoUtils.h"
-#include "llvm/Transforms/Obfuscation/Obfuscation.h"
-#include "llvm/Transforms/Obfuscation/Utils.h"
+#include "Obfuscation/CryptoUtils.h"
+#include "Obfuscation/Obfuscation.h"
+#include "Obfuscation/Utils.h"
 #include <cstdlib>
 #include <iostream>
 #include <map>
@@ -265,7 +265,11 @@ struct StringEncryption : public ModulePass {
     LoadInst *LI = IRB.CreateLoad(StatusGV, "LoadEncryptionStatus");
     LI->setAtomic(AtomicOrdering::Acquire); // Will be released at the start of
                                             // C
+#if LLVM_VERSION_MAJOR >= 10
     LI->setAlignment(llvm::Align(4));
+#else
+    LI->setAlignment(4);
+#endif
     Value *condition = IRB.CreateICmpEQ(
         LI, ConstantInt::get(Type::getInt32Ty(Func->getContext()), 0));
     A->getTerminator()->eraseFromParent();
@@ -275,7 +279,11 @@ struct StringEncryption : public ModulePass {
     IRBuilder<> IRBC(C->getFirstNonPHIOrDbgOrLifetime());
     StoreInst *SI = IRBC.CreateStore(
         ConstantInt::get(Type::getInt32Ty(Func->getContext()), 1), StatusGV);
+#if LLVM_VERSION_MAJOR >= 10
     SI->setAlignment(llvm::Align(4));
+#else
+    SI->setAlignment(4);
+#endif
     SI->setAtomic(AtomicOrdering::Release); // Release the lock acquired in LI
 
   } // End of HandleFunction
