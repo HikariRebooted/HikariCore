@@ -81,18 +81,18 @@ if(APPLE)
   # LLVMObfuscation
   target_link_options(LLVMObfuscation PRIVATE -undefined PRIVATE dynamic_lookup PRIVATE -flat_namespace)
   
-  # LLVMObfuscation special handling for Apple Clang
-  add_library(LLVMObfuscationAppleClang SHARED
-    ${CMAKE_CURRENT_LIST_DIR}/src/AddPasses/Loader_AppleClang.cpp
+  # LLVMObfuscation hooking mode
+  add_library(LLVMObfuscationHook SHARED
+    ${CMAKE_CURRENT_LIST_DIR}/src/AddPasses/Loader_Hook.cpp
   )
-  target_link_options(LLVMObfuscationAppleClang PRIVATE -undefined PRIVATE dynamic_lookup PRIVATE -flat_namespace)
-  target_include_directories(LLVMObfuscationAppleClang PRIVATE ${CMAKE_CURRENT_LIST_DIR}/substitute)
-  target_include_directories(LLVMObfuscationAppleClang PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
-  target_link_directories(LLVMObfuscationAppleClang PRIVATE ${CMAKE_CURRENT_LIST_DIR}/substitute)
-  target_link_libraries(LLVMObfuscationAppleClang LLVMObfuscationDeps LLVMObfuscationCommon substitute)
+  target_link_options(LLVMObfuscationHook PRIVATE -undefined PRIVATE dynamic_lookup PRIVATE -flat_namespace)
+  target_include_directories(LLVMObfuscationHook PRIVATE ${CMAKE_CURRENT_LIST_DIR}/substitute)
+  target_include_directories(LLVMObfuscationHook PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
+  target_link_directories(LLVMObfuscationHook PRIVATE ${CMAKE_CURRENT_LIST_DIR}/substitute)
+  target_link_libraries(LLVMObfuscationHook LLVMObfuscationDeps LLVMObfuscationCommon substitute)
   add_custom_target(install_name_tool ALL
-    COMMAND install_name_tool -change @executable_path/libsubstitute.dylib @rpath/libsubstitute.dylib ./libLLVMObfuscationAppleClang.dylib
-	DEPENDS LLVMObfuscationAppleClang
+    COMMAND install_name_tool -change @executable_path/libsubstitute.dylib @rpath/libsubstitute.dylib ./libLLVMObfuscationHook.dylib
+	DEPENDS LLVMObfuscationHook
   )  
 else()
 endif(APPLE)
