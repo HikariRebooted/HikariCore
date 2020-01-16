@@ -96,3 +96,7 @@ if(APPLE)
   )  
 else()
 endif(APPLE)
+
+if(UNIX AND NOT APPLE)
+  set(CMAKE_CXX_FLAGS "-fPIC")
+endif()
