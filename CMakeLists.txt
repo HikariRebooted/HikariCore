@@ -90,10 +90,15 @@ if(APPLE)
   target_include_directories(LLVMObfuscationHook PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
   target_link_directories(LLVMObfuscationHook PRIVATE ${CMAKE_CURRENT_LIST_DIR}/substitute)
   target_link_libraries(LLVMObfuscationHook LLVMObfuscationDeps LLVMObfuscationCommon substitute)
-  add_custom_target(install_name_tool ALL
-    COMMAND install_name_tool -change @executable_path/libsubstitute.dylib @rpath/libsubstitute.dylib ./libLLVMObfuscationHook.dylib
+  add_custom_target(install_name_tool_substitute ALL
+    COMMAND install_name_tool -change @executable_path/libsubstitute.dylib @loader_path/libsubstitute.dylib ./libLLVMObfuscationHook.dylib
 	DEPENDS LLVMObfuscationHook
-  )  
+  ) 
+  add_custom_target(install_name_tool_deps ALL
+    COMMAND install_name_tool -change @rpath/libLLVMObfuscationDeps.dylib @loader_path/libLLVMObfuscationDeps.dylib ./libLLVMObfuscationHook.dylib
+        DEPENDS LLVMObfuscationHook
+  )
+ 
 else()
 endif(APPLE)
 
