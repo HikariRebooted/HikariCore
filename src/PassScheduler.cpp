@@ -49,6 +49,13 @@ static cl::opt<bool>
 static cl::opt<bool>
     EnableFunctionWrapper("enable-funcwra", cl::init(false), cl::NotHidden,
                           cl::desc("Enable Function Wrapper."));
+// Being able to disable options
+
+// Why is this one there? For the LLVM C backend.
+static cl::opt<bool>
+DisableIndirectBranching("disable-indibran", cl::init(false), cl::NotHidden,
+                        cl::desc("Disable Indirect Branching."));
+
 // End Obfuscator Options
 
 static void LoadEnv() {
@@ -146,8 +153,8 @@ struct Obfuscation : public ModulePass {
       }
     }
     errs() << "Doing Post-Run Cleanup\n";
-    FunctionPass *P = createIndirectBranchPass(EnableAllObfuscation ||
-                                               EnableIndirectBranching);
+    FunctionPass *P = createIndirectBranchPass((EnableAllObfuscation ||
+                                               EnableIndirectBranching) && !DisableIndirectBranching);
     vector<Function *> funcs;
     for (Module::iterator iter = M.begin(); iter != M.end(); iter++) {
       funcs.push_back(&*iter);
