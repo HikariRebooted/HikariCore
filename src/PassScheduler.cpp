@@ -55,6 +55,9 @@ static cl::opt<bool>
 static cl::opt<bool>
 DisableIndirectBranching("disable-indibran", cl::init(false), cl::NotHidden,
                         cl::desc("Disable Indirect Branching."));
+static cl::opt<bool> DisableAntiClassDump("disable-acdobf", cl::init(false),
+cl::NotHidden,
+cl::desc("Disable AntiClassDump."));
 
 // End Obfuscator Options
 
@@ -77,6 +80,9 @@ static void LoadEnv() {
  if (getenv("INDIBRAN")) {
    EnableIndirectBranching = true;
  }
+ if (getenv("NOINDIBRAN")) {
+   DisableIndirectBranching = true;
+ }
  if (getenv("FUNCWRA")) {
    EnableFunctionWrapper = true;//Broken
  }
@@ -85,6 +91,9 @@ static void LoadEnv() {
  }
  if (getenv("ACDOBF")) {
    EnableAntiClassDump = true;
+ }
+ if (getenv("NOACDOBF")) {
+   DisableAntiClassDump = true;
  }
  if (getenv("CFFOBF")) {
    EnableFlattening = true;
@@ -99,7 +108,7 @@ struct Obfuscation : public ModulePass {
   }
   bool runOnModule(Module &M) override {
     // Initial ACD Pass
-    if (EnableAllObfuscation || EnableAntiClassDump) {
+    if ((EnableAllObfuscation || EnableAntiClassDump) && !DisableAntiClassDump) {
       ModulePass *P = createAntiClassDumpPass();
       P->doInitialization(M);
       P->runOnModule(M);
