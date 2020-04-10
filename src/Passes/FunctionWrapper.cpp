@@ -74,7 +74,8 @@ struct FunctionWrapper : public ModulePass {
         CS->getIntrinsicID() != Intrinsic::not_intrinsic) {
       return nullptr;
     }
-    if (Function *tmp = dyn_cast<Function>(calledFunction)) {
+    Function *tmp;
+    if (tmp = dyn_cast<Function>(calledFunction)) {
       if (tmp->getName().startswith("clang.")) {
         // Clang Intrinsic
         return nullptr;
@@ -91,7 +92,6 @@ struct FunctionWrapper : public ModulePass {
         // this pass with more advanced solutions 
         return nullptr;       
        }   
-      }
     }
 
     // Create a new function which in turn calls the actual function
