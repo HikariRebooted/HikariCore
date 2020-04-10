@@ -1,4 +1,4 @@
-//For licensing terms, please read LICENSE.md in this repository.
+// For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
 /*
   For maximum usability. We provide two modes for this pass, as defined in
@@ -11,6 +11,7 @@
   This pass only provides thin mode
 */
 
+#include "Obfuscation/Obfuscation.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilder.h"
@@ -21,7 +22,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
-#include "Obfuscation/Obfuscation.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include <algorithm>
 #include <cassert>

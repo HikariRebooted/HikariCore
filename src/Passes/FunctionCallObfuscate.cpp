@@ -1,5 +1,6 @@
-//For licensing terms, please read LICENSE.md in this repository.
+// For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
+#include "Obfuscation/Obfuscation.h"
 #include "json.hpp"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/CallSite.h"
@@ -12,7 +13,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
-#include "Obfuscation/Obfuscation.h"
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
@@ -25,10 +25,10 @@ using json = nlohmann::json;
 static const int DARWIN_FLAG = 0x2 | 0x8;
 static const int ANDROID64_FLAG = 0x00002 | 0x100;
 static const int ANDROID32_FLAG = 0x0000 | 0x2;
-static cl::opt<uint64_t> dlopen_flag(
-    "fco_flag",
-    cl::desc("The value of RTLD_DEFAULT on your platform"),
-    cl::value_desc("value"), cl::init(-1), cl::Optional);
+static cl::opt<uint64_t>
+    dlopen_flag("fco_flag",
+                cl::desc("The value of RTLD_DEFAULT on your platform"),
+                cl::value_desc("value"), cl::init(-1), cl::Optional);
 static cl::opt<string>
     SymbolConfigPath("fcoconfig",
                      cl::desc("FunctionCallObfuscate Configuration Path"),
@@ -209,8 +209,10 @@ struct FunctionCallObfuscate : public FunctionPass {
       return false;
     }
     Triple Tri(F.getParent()->getTargetTriple());
-    if (!Tri.isAndroid() && !Tri.isOSDarwin() &&!(Tri.getOS() == Triple::Linux)) {
-      errs() << "Unsupported Target Triple:"<< F.getParent()->getTargetTriple() << "\n";
+    if (!Tri.isAndroid() && !Tri.isOSDarwin() &&
+        !(Tri.getOS() == Triple::Linux)) {
+      errs() << "Unsupported Target Triple:" << F.getParent()->getTargetTriple()
+             << "\n";
       return false;
     }
     errs() << "Running FunctionCallObfuscate On " << F.getName() << "\n";
@@ -226,10 +228,10 @@ struct FunctionCallObfuscate : public FunctionPass {
     FunctionType *dlsym_type =
         FunctionType::get(Int8PtrTy, {Int8PtrTy, Int8PtrTy}, false);
 #if LLVM_VERSION_MAJOR >= 9
-    Function *dlopen_decl =
-        cast<Function>(M->getOrInsertFunction("dlopen", dlopen_type).getCallee());
-    Function *dlsym_decl =
-        cast<Function>((M->getOrInsertFunction("dlsym", dlsym_type)).getCallee());
+    Function *dlopen_decl = cast<Function>(
+        M->getOrInsertFunction("dlopen", dlopen_type).getCallee());
+    Function *dlsym_decl = cast<Function>(
+        (M->getOrInsertFunction("dlsym", dlsym_type)).getCallee());
 #else
     Function *dlopen_decl =
         cast<Function>(M->getOrInsertFunction("dlopen", dlopen_type));
@@ -282,26 +284,26 @@ struct FunctionCallObfuscate : public FunctionPass {
             IRBuilder<> IRB(EntryBlock, EntryBlock->getFirstInsertionPt());
             vector<Value *> dlopenargs;
             dlopenargs.push_back(Constant::getNullValue(Int8PtrTy));
-             if (Tri.isOSDarwin()) {
-              dlopen_flag=DARWIN_FLAG;
+            if (Tri.isOSDarwin()) {
+              dlopen_flag = DARWIN_FLAG;
             } else if (Tri.isAndroid()) {
               if (Tri.isArch64Bit()) {
-                dlopen_flag=ANDROID64_FLAG;
+                dlopen_flag = ANDROID64_FLAG;
               } else {
-                dlopen_flag=ANDROID32_FLAG;
+                dlopen_flag = ANDROID32_FLAG;
               }
 
-            } else if(Tri.getOS() == Triple::Linux) {
-	      if (Tri.isArch64Bit()) {
-                dlopen_flag=ANDROID64_FLAG;
+            } else if (Tri.getOS() == Triple::Linux) {
+              if (Tri.isArch64Bit()) {
+                dlopen_flag = ANDROID64_FLAG;
               } else {
-                dlopen_flag=ANDROID32_FLAG;
+                dlopen_flag = ANDROID32_FLAG;
               }
-	    } 
-	     else {
+            } else {
               errs() << "[FunctionCallObfuscate]Unsupported Target Triple:"
-                         << F.getParent()->getTargetTriple() << "\n";
-              errs()<<"[FunctionCallObfuscate]Applying Default Signature:"<<dlopen_flag<<"\n";
+                     << F.getParent()->getTargetTriple() << "\n";
+              errs() << "[FunctionCallObfuscate]Applying Default Signature:"
+                     << dlopen_flag << "\n";
             }
             dlopenargs.push_back(ConstantInt::get(Int32Ty, dlopen_flag));
             Value *Handle =

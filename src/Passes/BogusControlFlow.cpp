@@ -1,4 +1,4 @@
-//For licensing terms, please read LICENSE.md in this repository.
+// For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
 //===- BogusControlFlow.cpp - BogusControlFlow Obfuscation
 // pass-------------------------===//
@@ -91,13 +91,12 @@
 //===----------------------------------------------------------------------------------===//
 
 #include "Obfuscation/BogusControlFlow.h"
+#include "Obfuscation/Utils.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/NoFolder.h"
 #include "llvm/Support/TargetSelect.h"
-#include "Obfuscation/Utils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <memory>
-
 
 // Options for the pass
 const int defaultObfRate = 70, defaultObfTime = 1;
@@ -126,31 +125,31 @@ static CmpInst::Predicate preds[] = {CmpInst::ICMP_EQ,  CmpInst::ICMP_NE,
                                      CmpInst::ICMP_UGT, CmpInst::ICMP_UGE,
                                      CmpInst::ICMP_ULT, CmpInst::ICMP_ULE};
 namespace {
-  static bool OnlyUsedBy(Value *V, Value *Usr) {
-    for (User *U : V->users())
-      if (U != Usr)
-        return false;
+static bool OnlyUsedBy(Value *V, Value *Usr) {
+  for (User *U : V->users())
+    if (U != Usr)
+      return false;
 
-    return true;
-  }
-  static void RemoveDeadConstant(Constant *C) {
-    assert(C->use_empty() && "Constant is not dead!");
-    SmallPtrSet<Constant*, 4> Operands;
-    for (Value *Op : C->operands())
-      if (OnlyUsedBy(Op, C))
-        Operands.insert(cast<Constant>(Op));
-    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
-      if (!GV->hasLocalLinkage()) return;   // Don't delete non-static globals.
-      GV->eraseFromParent();
-    }
-    else if (!isa<Function>(C))
-      if (isa<CompositeType>(C->getType()))
-        C->destroyConstant();
+  return true;
+}
+static void RemoveDeadConstant(Constant *C) {
+  assert(C->use_empty() && "Constant is not dead!");
+  SmallPtrSet<Constant *, 4> Operands;
+  for (Value *Op : C->operands())
+    if (OnlyUsedBy(Op, C))
+      Operands.insert(cast<Constant>(Op));
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
+    if (!GV->hasLocalLinkage())
+      return; // Don't delete non-static globals.
+    GV->eraseFromParent();
+  } else if (!isa<Function>(C))
+    if (isa<CompositeType>(C->getType()))
+      C->destroyConstant();
 
-    // If the constant referenced anything, see if we can delete it as well.
-    for (Constant *O : Operands)
-      RemoveDeadConstant(O);
-  }
+  // If the constant referenced anything, see if we can delete it as well.
+  for (Constant *O : Operands)
+    RemoveDeadConstant(O);
+}
 struct BogusControlFlow : public FunctionPass {
   static char ID; // Pass identification
   bool flag;
@@ -302,15 +301,15 @@ struct BogusControlFlow : public FunctionPass {
     // For now, the condition is an always true comparaison between 2 float
     // This will be complicated after the pass (in doFinalization())
 
-    // We need to use ConstantInt instead of ConstantFP as ConstantFP results in strange dead-loop
-    // when injected into Xcode
+    // We need to use ConstantInt instead of ConstantFP as ConstantFP results in
+    // strange dead-loop when injected into Xcode
     Value *LHS = ConstantInt::get(Type::getInt32Ty(F.getContext()), 1);
     Value *RHS = ConstantInt::get(Type::getInt32Ty(F.getContext()), 1);
     DEBUG_WITH_TYPE("gen", errs() << "bcf: Value LHS and RHS created\n");
 
     // The always true condition. End of the first block
-    ICmpInst *condition =
-        new ICmpInst(*basicBlock, ICmpInst::ICMP_EQ, LHS, RHS,"BCFPlaceHolderPred");
+    ICmpInst *condition = new ICmpInst(*basicBlock, ICmpInst::ICMP_EQ, LHS, RHS,
+                                       "BCFPlaceHolderPred");
     DEBUG_WITH_TYPE("gen", errs() << "bcf: Always true condition created\n");
 
     // Jump to the original basic block if the condition is true or
@@ -344,8 +343,8 @@ struct BogusControlFlow : public FunctionPass {
     // of the altered block.. So we erase the terminator created when splitting.
     originalBB->getTerminator()->eraseFromParent();
     // We add at the end a new always true condition
-    ICmpInst *condition2 =
-        new ICmpInst(*originalBB, CmpInst::ICMP_EQ, LHS, RHS,"BCFPlaceHolderPred");
+    ICmpInst *condition2 = new ICmpInst(*originalBB, CmpInst::ICMP_EQ, LHS, RHS,
+                                        "BCFPlaceHolderPred");
     // BranchInst::Create(originalBBpart2, alteredBB, (Value
     // *)condition2,originalBB);  Do random behavior to avoid pattern
     // recognition This is achieved by jumping to a random BB
@@ -586,7 +585,7 @@ struct BogusControlFlow : public FunctionPass {
     }
     // Remove DIs from AlterBB
     vector<CallInst *> toRemove;
-    vector<Constant*> DeadConstants;
+    vector<Constant *> DeadConstants;
     for (Instruction &I : *alteredBB) {
       if (CallInst *CI = dyn_cast<CallInst>(&I)) {
         if (CI->getCalledFunction() != nullptr &&
@@ -656,7 +655,8 @@ struct BogusControlFlow : public FunctionPass {
             ICmpInst *cond = (ICmpInst *)br->getCondition();
             unsigned opcode = cond->getOpcode();
             if (opcode == Instruction::ICmp) {
-              if (cond->getPredicate() == ICmpInst::ICMP_EQ && cond->getName().startswith("BCFPlaceHolderPred")) {
+              if (cond->getPredicate() == ICmpInst::ICMP_EQ &&
+                  cond->getName().startswith("BCFPlaceHolderPred")) {
                 DEBUG_WITH_TYPE("gen",
                                 errs() << "bcf: an always true predicate !\n");
                 toDelete.push_back(cond); // The condition

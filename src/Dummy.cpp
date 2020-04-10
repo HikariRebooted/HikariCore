@@ -1,1 +1,1 @@
-static int dummy=13;
+static int dummy = 13;

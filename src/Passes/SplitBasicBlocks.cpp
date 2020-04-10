@@ -1,4 +1,4 @@
-//For licensing terms, please read LICENSE.md in this repository.
+// For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
 #include "Obfuscation/CryptoUtils.h"
 #include "Obfuscation/Split.h"

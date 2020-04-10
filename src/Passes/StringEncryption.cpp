@@ -1,6 +1,9 @@
-//For licensing terms, please read LICENSE.md in this repository.
+// For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
 #include "Obfuscation/StringEncryption.h"
+#include "Obfuscation/CryptoUtils.h"
+#include "Obfuscation/Obfuscation.h"
+#include "Obfuscation/Utils.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
@@ -12,9 +15,6 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
-#include "Obfuscation/CryptoUtils.h"
-#include "Obfuscation/Obfuscation.h"
-#include "Obfuscation/Utils.h"
 #include <cstdlib>
 #include <iostream>
 #include <map>
@@ -58,8 +58,9 @@ struct StringEncryption : public ModulePass {
     for (BasicBlock &BB : *Func) {
       for (Instruction &I : BB) {
         for (Value *Op : I.operands()) {
-          if (GlobalVariable *G = dyn_cast<GlobalVariable>(Op->stripPointerCasts())) {
-            if(User* U=dyn_cast<User>(Op)){
+          if (GlobalVariable *G =
+                  dyn_cast<GlobalVariable>(Op->stripPointerCasts())) {
+            if (User *U = dyn_cast<User>(Op)) {
               Users.insert(U);
             }
             Users.insert(&I);
@@ -71,7 +72,9 @@ struct StringEncryption : public ModulePass {
     set<GlobalVariable *> rawStrings;
     set<GlobalVariable *> objCStrings;
     map<GlobalVariable *, pair<Constant *, GlobalVariable *>> GV2Keys;
-    map<GlobalVariable * /*old*/, pair<GlobalVariable * /*encrypted*/, GlobalVariable * /*decrypt space*/>> old2new;
+    map<GlobalVariable * /*old*/, pair<GlobalVariable * /*encrypted*/,
+                                       GlobalVariable * /*decrypt space*/>>
+        old2new;
     for (GlobalVariable *GV : Globals) {
       if (GV->hasInitializer() &&
           GV->getSection() != StringRef("llvm.metadata") &&
@@ -87,15 +90,14 @@ struct StringEncryption : public ModulePass {
 
         } else if (isa<ConstantDataSequential>(GV->getInitializer())) {
           rawStrings.insert(GV);
-        }else if(isa<ConstantArray>(GV->getInitializer())){
-           ConstantArray* CA=cast<ConstantArray>(GV->getInitializer());
-           for(unsigned i=0;i<CA->getNumOperands();i++){
-             Value* op=CA->getOperand(i)->stripPointerCasts();
-             if(GlobalVariable* GV=dyn_cast<GlobalVariable>(op)){
-               Globals.insert(GV);
-             }
-           }
-
+        } else if (isa<ConstantArray>(GV->getInitializer())) {
+          ConstantArray *CA = cast<ConstantArray>(GV->getInitializer());
+          for (unsigned i = 0; i < CA->getNumOperands(); i++) {
+            Value *op = CA->getOperand(i)->stripPointerCasts();
+            if (GlobalVariable *GV = dyn_cast<GlobalVariable>(op)) {
+              Globals.insert(GV);
+            }
+          }
         }
       }
     }
@@ -131,7 +133,7 @@ struct StringEncryption : public ModulePass {
         EncryptedConst = ConstantDataArray::get(GV->getParent()->getContext(),
                                                 ArrayRef<uint8_t>(encry));
         DummyConst = ConstantDataArray::get(GV->getParent()->getContext(),
-                                                ArrayRef<uint8_t>(dummy));
+                                            ArrayRef<uint8_t>(dummy));
 
       } else if (intType == Type::getInt16Ty(GV->getParent()->getContext())) {
         vector<uint16_t> keys;
@@ -149,7 +151,7 @@ struct StringEncryption : public ModulePass {
         EncryptedConst = ConstantDataArray::get(GV->getParent()->getContext(),
                                                 ArrayRef<uint16_t>(encry));
         DummyConst = ConstantDataArray::get(GV->getParent()->getContext(),
-                                                ArrayRef<uint16_t>(dummy));
+                                            ArrayRef<uint16_t>(dummy));
       } else if (intType == Type::getInt32Ty(GV->getParent()->getContext())) {
         vector<uint32_t> keys;
         vector<uint32_t> encry;
@@ -166,7 +168,7 @@ struct StringEncryption : public ModulePass {
         EncryptedConst = ConstantDataArray::get(GV->getParent()->getContext(),
                                                 ArrayRef<uint32_t>(encry));
         DummyConst = ConstantDataArray::get(GV->getParent()->getContext(),
-                                                ArrayRef<uint32_t>(dummy));
+                                            ArrayRef<uint32_t>(dummy));
       } else if (intType == Type::getInt64Ty(GV->getParent()->getContext())) {
         vector<uint64_t> keys;
         vector<uint64_t> encry;
@@ -183,7 +185,7 @@ struct StringEncryption : public ModulePass {
         EncryptedConst = ConstantDataArray::get(GV->getParent()->getContext(),
                                                 ArrayRef<uint64_t>(encry));
         DummyConst = ConstantDataArray::get(GV->getParent()->getContext(),
-                                                ArrayRef<uint64_t>(dummy));
+                                            ArrayRef<uint64_t>(dummy));
       } else {
         errs() << "Unsupported CDS Type\n";
         abort();
@@ -194,28 +196,35 @@ struct StringEncryption : public ModulePass {
           GV->getLinkage(), EncryptedConst, "EncryptedString", nullptr,
           GV->getThreadLocalMode(), GV->getType()->getAddressSpace());
       GlobalVariable *DecryptSpaceGV = new GlobalVariable(
-          *(GV->getParent()), DummyConst->getType(), false,
-          GV->getLinkage(), DummyConst, "DecryptSpace", nullptr,
-          GV->getThreadLocalMode(), GV->getType()->getAddressSpace());
+          *(GV->getParent()), DummyConst->getType(), false, GV->getLinkage(),
+          DummyConst, "DecryptSpace", nullptr, GV->getThreadLocalMode(),
+          GV->getType()->getAddressSpace());
       old2new[GV] = make_pair(EncryptedRawGV, DecryptSpaceGV);
       GV2Keys[DecryptSpaceGV] = make_pair(KeyConst, EncryptedRawGV);
     }
     // Now prepare ObjC new GV
     for (GlobalVariable *GV : objCStrings) {
       ConstantStruct *CS = cast<ConstantStruct>(GV->getInitializer());
-      GlobalVariable *oldrawString = cast<GlobalVariable>(CS->getOperand(2)->stripPointerCasts());
-      if (old2new.find(oldrawString) == old2new.end()) { // Filter out zero initializers
+      GlobalVariable *oldrawString =
+          cast<GlobalVariable>(CS->getOperand(2)->stripPointerCasts());
+      if (old2new.find(oldrawString) ==
+          old2new.end()) { // Filter out zero initializers
         continue;
       }
-      GlobalVariable *EncryptedOCGV = ObjectivCString(GV, "EncryptedStringObjC", oldrawString, old2new[oldrawString].first, CS);
-      GlobalVariable *DecryptSpaceOCGV = ObjectivCString(GV, "DecryptSpaceObjC", oldrawString, old2new[oldrawString].second, CS);
+      GlobalVariable *EncryptedOCGV =
+          ObjectivCString(GV, "EncryptedStringObjC", oldrawString,
+                          old2new[oldrawString].first, CS);
+      GlobalVariable *DecryptSpaceOCGV =
+          ObjectivCString(GV, "DecryptSpaceObjC", oldrawString,
+                          old2new[oldrawString].second, CS);
       old2new[GV] = make_pair(EncryptedOCGV, DecryptSpaceOCGV);
     } // End prepare ObjC new GV
-    if(old2new.empty() || GV2Keys.empty())
+    if (old2new.empty() || GV2Keys.empty())
       return;
     // Replace Uses
     for (User *U : Users) {
-      for (map<GlobalVariable *, pair<GlobalVariable *, GlobalVariable *>>::iterator iter =
+      for (map<GlobalVariable *,
+               pair<GlobalVariable *, GlobalVariable *>>::iterator iter =
                old2new.begin();
            iter != old2new.end(); ++iter) {
         U->replaceUsesOfWith(iter->first, iter->second.second);
@@ -231,7 +240,8 @@ struct StringEncryption : public ModulePass {
       }
     }
     // CleanUp Old Raw GVs
-    for (map<GlobalVariable *, pair<GlobalVariable *, GlobalVariable *>>::iterator iter =
+    for (map<GlobalVariable *,
+             pair<GlobalVariable *, GlobalVariable *>>::iterator iter =
              old2new.begin();
          iter != old2new.end(); ++iter) {
       GlobalVariable *toDelete = iter->first;
@@ -290,33 +300,42 @@ struct StringEncryption : public ModulePass {
 
   } // End of HandleFunction
 
-  GlobalVariable *ObjectivCString(GlobalVariable *GV, string name, GlobalVariable *oldrawString, GlobalVariable *newString, ConstantStruct *CS) {
-      Value *zero = ConstantInt::get(Type::getInt32Ty(GV->getContext()), 0);
-      vector<Constant *> vals;
-      vals.push_back(CS->getOperand(0));
-      vals.push_back(CS->getOperand(1));
-      Constant *GEPed = ConstantExpr::getInBoundsGetElementPtr(nullptr, newString, {zero, zero});
-      if (GEPed->getType() == CS->getOperand(2)->getType()) {
-        vals.push_back(GEPed);
-      } else {
-        Constant *BitCasted = ConstantExpr::getBitCast(newString, CS->getOperand(2)->getType());
-        vals.push_back(BitCasted);
-      }
-      vals.push_back(CS->getOperand(3));
-      Constant *newCS = ConstantStruct::get(CS->getType(), ArrayRef<Constant *>(vals));
-      return new GlobalVariable(
-          *(GV->getParent()), newCS->getType(), false, GV->getLinkage(), newCS,
-          name.c_str(), nullptr, GV->getThreadLocalMode(),
-          GV->getType()->getAddressSpace());
+  GlobalVariable *ObjectivCString(GlobalVariable *GV, string name,
+                                  GlobalVariable *oldrawString,
+                                  GlobalVariable *newString,
+                                  ConstantStruct *CS) {
+    Value *zero = ConstantInt::get(Type::getInt32Ty(GV->getContext()), 0);
+    vector<Constant *> vals;
+    vals.push_back(CS->getOperand(0));
+    vals.push_back(CS->getOperand(1));
+    Constant *GEPed = ConstantExpr::getInBoundsGetElementPtr(nullptr, newString,
+                                                             {zero, zero});
+    if (GEPed->getType() == CS->getOperand(2)->getType()) {
+      vals.push_back(GEPed);
+    } else {
+      Constant *BitCasted =
+          ConstantExpr::getBitCast(newString, CS->getOperand(2)->getType());
+      vals.push_back(BitCasted);
+    }
+    vals.push_back(CS->getOperand(3));
+    Constant *newCS =
+        ConstantStruct::get(CS->getType(), ArrayRef<Constant *>(vals));
+    return new GlobalVariable(*(GV->getParent()), newCS->getType(), false,
+                              GV->getLinkage(), newCS, name.c_str(), nullptr,
+                              GV->getThreadLocalMode(),
+                              GV->getType()->getAddressSpace());
   }
 
-  void HandleDecryptionBlock(BasicBlock *B, BasicBlock *C,
-                             map<GlobalVariable *, pair<Constant *, GlobalVariable *>> &GV2Keys) {
+  void HandleDecryptionBlock(
+      BasicBlock *B, BasicBlock *C,
+      map<GlobalVariable *, pair<Constant *, GlobalVariable *>> &GV2Keys) {
     IRBuilder<> IRB(B);
     Value *zero = ConstantInt::get(Type::getInt32Ty(B->getContext()), 0);
-    for (map<GlobalVariable *, pair<Constant *, GlobalVariable *>>::iterator iter = GV2Keys.begin();
+    for (map<GlobalVariable *, pair<Constant *, GlobalVariable *>>::iterator
+             iter = GV2Keys.begin();
          iter != GV2Keys.end(); ++iter) {
-      ConstantDataArray *CastedCDA = cast<ConstantDataArray>(iter->second.first);
+      ConstantDataArray *CastedCDA =
+          cast<ConstantDataArray>(iter->second.first);
       // Prevent optimization of encrypted data
       appendToCompilerUsed(*iter->second.second->getParent(),
                            {iter->second.second});
@@ -324,7 +343,8 @@ struct StringEncryption : public ModulePass {
       // Also, this hides keys
       for (unsigned i = 0; i < CastedCDA->getType()->getNumElements(); i++) {
         Value *offset = ConstantInt::get(Type::getInt32Ty(B->getContext()), i);
-        Value *EncryptedGEP = IRB.CreateGEP(iter->second.second, {zero, offset});
+        Value *EncryptedGEP =
+            IRB.CreateGEP(iter->second.second, {zero, offset});
         Value *DecryptedGEP = IRB.CreateGEP(iter->first, {zero, offset});
         LoadInst *LI = IRB.CreateLoad(EncryptedGEP, "EncryptedChar");
         Value *XORed = IRB.CreateXor(LI, CastedCDA->getElementAsConstant(i));

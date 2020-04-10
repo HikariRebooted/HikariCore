@@ -1,12 +1,11 @@
-//For licensing terms, please read LICENSE.md in this repository.
+// For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
 #include "Obfuscation/Utils.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/NoFolder.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 using namespace std;
 // Shamefully borrowed from ../Scalar/RegToMem.cpp :(
@@ -68,29 +67,29 @@ void FixBasicBlockConstantExpr(BasicBlock *BB) {
   // Otherwise replacing on Constant will crash the compiler
   // Things to note:
   // - Phis must be placed at BB start so CEs must be placed prior to current BB
-  assert(!BB->empty()&&"BasicBlock is empty!");
-  assert((BB->getParent()!=NULL)&&"BasicBlock must be in a Function!");
-  Instruction* FunctionInsertPt=&*(BB->getParent()->getEntryBlock().getFirstInsertionPt());
-  //Instruction* LocalBBInsertPt=&*(BB.getFirstInsertionPt());
+  assert(!BB->empty() && "BasicBlock is empty!");
+  assert((BB->getParent() != NULL) && "BasicBlock must be in a Function!");
+  Instruction *FunctionInsertPt =
+      &*(BB->getParent()->getEntryBlock().getFirstInsertionPt());
+  // Instruction* LocalBBInsertPt=&*(BB.getFirstInsertionPt());
 
   for (Instruction &I : *BB) {
-    if(isa<LandingPadInst>(I)||isa<FuncletPadInst>(I)){
+    if (isa<LandingPadInst>(I) || isa<FuncletPadInst>(I)) {
       continue;
     }
-    for(unsigned i=0;i<I.getNumOperands();i++){
-      if(ConstantExpr* C=dyn_cast<ConstantExpr>(I.getOperand(i))){
-        Instruction* InsertPt=&I;
+    for (unsigned i = 0; i < I.getNumOperands(); i++) {
+      if (ConstantExpr *C = dyn_cast<ConstantExpr>(I.getOperand(i))) {
+        Instruction *InsertPt = &I;
         IRBuilder<NoFolder> IRB(InsertPt);
-        if(isa<PHINode>(I)){
+        if (isa<PHINode>(I)) {
           IRB.SetInsertPoint(FunctionInsertPt);
         }
         Instruction *Inst = IRB.Insert(C->getAsInstruction());
-        I.setOperand(i,Inst);
+        I.setOperand(i, Inst);
       }
     }
   }
 }
-
 
 map<GlobalValue *, StringRef> BuildAnnotateMap(Module &M) {
   map<GlobalValue *, StringRef> VAMap;

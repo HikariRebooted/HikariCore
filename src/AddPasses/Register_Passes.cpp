@@ -1,4 +1,4 @@
-//For licensing terms, please read LICENSE.md in this repository.
+// For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
 /*
   Hikari pass registration.
@@ -25,4 +25,3 @@ static llvm::RegisterStandardPasses RegisterHikari_NoOpt(
        llvm::legacy::PassManagerBase &PM) { PM.add(createObfuscationPass()); });
 
 } // namespace llvm
-

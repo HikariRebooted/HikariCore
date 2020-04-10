@@ -1,10 +1,10 @@
-//For licensing terms, please read LICENSE.md in this repository.
+// For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
 #include "Obfuscation/Substitution.h"
+#include "Obfuscation/Utils.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/raw_ostream.h"
-#include "Obfuscation/Utils.h"
 
 #define DEBUG_TYPE "substitution"
 
@@ -223,15 +223,13 @@ void Substitution::addDoubleNeg(BinaryOperator *bo) {
     // Check signed wrap
     // op->setHasNoSignedWrap(bo->hasNoSignedWrap());
     // op->setHasNoUnsignedWrap(bo->hasNoUnsignedWrap());
-  }
-  else {
+  } else {
     op = BinaryOperator::CreateFNeg(bo->getOperand(0), "", bo);
     op2 = BinaryOperator::CreateFNeg(bo->getOperand(1), "", bo);
     op = BinaryOperator::Create(Instruction::FAdd, op, op2, "", bo);
     op = BinaryOperator::CreateFNeg(op, "", bo);
   }
-    bo->replaceAllUsesWith(op);
-
+  bo->replaceAllUsesWith(op);
 }
 
 // Implementation of  r = rand (); a = b + r; a = a + c; a = a - r
@@ -306,8 +304,7 @@ void Substitution::subNeg(BinaryOperator *bo) {
     // Check signed wrap
     // op->setHasNoSignedWrap(bo->hasNoSignedWrap());
     // op->setHasNoUnsignedWrap(bo->hasNoUnsignedWrap());
-  }
-  else {
+  } else {
     op = BinaryOperator::CreateFNeg(bo->getOperand(1), "", bo);
     op = BinaryOperator::Create(Instruction::FAdd, bo->getOperand(0), op, "",
                                 bo);

@@ -1,8 +1,8 @@
-//For licensing terms, please read LICENSE.md in this repository.
+// For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
-#include "Obfuscation/Obfuscation.h"
-#include "Obfuscation/CryptoUtils.h"
 #include "LegacyLowerSwitch.h"
+#include "Obfuscation/CryptoUtils.h"
+#include "Obfuscation/Obfuscation.h"
 #include <fcntl.h>
 using namespace llvm;
 
@@ -44,7 +44,7 @@ bool Flattening::flatten(Function *f) {
   AllocaInst *switchVar;
 
   // SCRAMBLER
-  std::map<uint32_t,uint32_t> scrambling_key;
+  std::map<uint32_t, uint32_t> scrambling_key;
   // END OF SCRAMBLER
 
   // Lower switch
@@ -55,13 +55,16 @@ bool Flattening::flatten(Function *f) {
   for (Function::iterator i = f->begin(); i != f->end(); ++i) {
     BasicBlock *tmp = &*i;
     if (tmp->isEHPad() || tmp->isLandingPad()) {
-          errs()<<f->getName()<<" Contains Exception Handing Instructions and is unsupported for flattening in the open-source version of Hikari.\n";
-          return false;
+      errs() << f->getName()
+             << " Contains Exception Handing Instructions and is unsupported "
+                "for flattening in the open-source version of Hikari.\n";
+      return false;
     }
     origBB.push_back(tmp);
 
     BasicBlock *bb = &*i;
-    if (!isa<BranchInst>(bb->getTerminator()) && !isa<ReturnInst>(bb->getTerminator())) {
+    if (!isa<BranchInst>(bb->getTerminator()) &&
+        !isa<ReturnInst>(bb->getTerminator())) {
       return false;
     }
   }
@@ -98,11 +101,11 @@ bool Flattening::flatten(Function *f) {
   }
 
   // Remove jump
-  Instruction* oldTerm=insert->getTerminator();
+  Instruction *oldTerm = insert->getTerminator();
 
   // Create switch variable and set as it
-  switchVar =
-      new AllocaInst(Type::getInt32Ty(f->getContext()), 0, "switchVar",oldTerm);
+  switchVar = new AllocaInst(Type::getInt32Ty(f->getContext()), 0, "switchVar",
+                             oldTerm);
   oldTerm->eraseFromParent();
   new StoreInst(
       ConstantInt::get(Type::getInt32Ty(f->getContext()),
@@ -222,8 +225,8 @@ bool Flattening::flatten(Function *f) {
       continue;
     }
   }
-  errs()<<"Fixing Stack\n";
+  errs() << "Fixing Stack\n";
   fixStack(f);
-  errs()<<"Fixed Stack\n";
+  errs() << "Fixed Stack\n";
   return true;
 }

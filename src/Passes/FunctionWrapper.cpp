@@ -1,5 +1,6 @@
-//For licensing terms, please read LICENSE.md in this repository.
+// For licensing terms, please read LICENSE.md in this repository.
 //===----------------------------------------------------------------------===//
+#include "Obfuscation/Obfuscation.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilder.h"
@@ -9,7 +10,6 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Pass.h"
-#include "Obfuscation/Obfuscation.h"
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -79,17 +79,19 @@ struct FunctionWrapper : public ModulePass {
         // Clang Intrinsic
         return nullptr;
       }
-      for(auto argiter = tmp->arg_begin(); argiter!= tmp->arg_end(); ++argiter) {
-       Argument& arg=*(argiter);
-          if(arg.hasByValAttr()){
-           // Arguments with byval attribute yields issues without proper handling.
-           // The "proper" method to handle this is to revisit and patch attribute stealing code.
-           // Technically readonly attr probably should also get filtered out here.
+      for (auto argiter = tmp->arg_begin(); argiter != tmp->arg_end();
+           ++argiter) {
+        Argument &arg = *(argiter);
+        if (arg.hasByValAttr()) {
+          // Arguments with byval attribute yields issues without proper
+          // handling. The "proper" method to handle this is to revisit and
+          // patch attribute stealing code. Technically readonly attr probably
+          // should also get filtered out here.
 
-           // Nah too much work. This would do for open-source version since private already
-           // this pass with more advanced solutions 
-           return nullptr;       
-          }   
+          // Nah too much work. This would do for open-source version since
+          // private already this pass with more advanced solutions
+          return nullptr;
+        }
       }
     }
     // Create a new function which in turn calls the actual function
@@ -102,7 +104,8 @@ struct FunctionWrapper : public ModulePass {
     Function *func =
         Function::Create(ft, GlobalValue::LinkageTypes::InternalLinkage,
                          "HikariFunctionWrapper", CS->getParent()->getModule());
-      //Trolling was all fun and shit so old implementation forced this symbol to exist in all objects
+    // Trolling was all fun and shit so old implementation forced this symbol to
+    // exist in all objects
     appendToCompilerUsed(*func->getParent(), {func});
     BasicBlock *BB = BasicBlock::Create(func->getContext(), "", func);
     IRBuilder<> IRB(BB);
@@ -110,7 +113,10 @@ struct FunctionWrapper : public ModulePass {
     for (auto arg = func->arg_begin(); arg != func->arg_end(); arg++) {
       params.push_back(arg);
     }
-    Value *retval = IRB.CreateCall(ConstantExpr::getBitCast(cast<Function>(calledFunction),CS->getCalledValue()->getType()), ArrayRef<Value *>(params));
+    Value *retval = IRB.CreateCall(
+        ConstantExpr::getBitCast(cast<Function>(calledFunction),
+                                 CS->getCalledValue()->getType()),
+        ArrayRef<Value *>(params));
     if (ft->getReturnType()->isVoidTy()) {
       IRB.CreateRetVoid();
     } else {
