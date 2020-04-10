@@ -74,26 +74,24 @@ struct FunctionWrapper : public ModulePass {
         CS->getIntrinsicID() != Intrinsic::not_intrinsic) {
       return nullptr;
     }
-    Function *tmp;
-    if (tmp = dyn_cast<Function>(calledFunction)) {
+    if (Function *tmp = dyn_cast<Function>(calledFunction)) {
       if (tmp->getName().startswith("clang.")) {
         // Clang Intrinsic
         return nullptr;
       }
-    }
-    for(auto argiter = tmp->arg_begin(); argiter!= tmp->arg_end(); ++argiter) {
+      for(auto argiter = tmp->arg_begin(); argiter!= tmp->arg_end(); ++argiter) {
        Argument& arg=*(argiter);
-       if(arg.hasByValAttr()){
-        // Arguments with byval attribute yields issues without proper handling.
-        // The "proper" method to handle this is to revisit and patch attribute stealing code.
-        // Technically readonly attr probably should also get filtered out here.
+          if(arg.hasByValAttr()){
+           // Arguments with byval attribute yields issues without proper handling.
+           // The "proper" method to handle this is to revisit and patch attribute stealing code.
+           // Technically readonly attr probably should also get filtered out here.
 
-        // Nah too much work. This would do for open-source version since private already
-        // this pass with more advanced solutions 
-        return nullptr;       
-       }   
+           // Nah too much work. This would do for open-source version since private already
+           // this pass with more advanced solutions 
+           return nullptr;       
+          }   
+      }
     }
-
     // Create a new function which in turn calls the actual function
     vector<Type *> types;
     for (unsigned i = 0; i < CS->getNumArgOperands(); i++) {
