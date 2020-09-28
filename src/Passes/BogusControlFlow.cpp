@@ -597,7 +597,9 @@ struct BogusControlFlow : public FunctionPass {
     // Shamefully stolen from IPO/StripSymbols.cpp
     for (CallInst *CI : toRemove) {
       Value *Arg1 = CI->getArgOperand(0);
-      Value *Arg2 = CI->getArgOperand(1);
+      Value *Arg2;
+      if (CI->getNumArgOperands() > 1)
+        Arg2 = CI->getArgOperand(1);
       assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
       if (Arg1->use_empty()) {
