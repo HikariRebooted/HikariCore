@@ -71,7 +71,7 @@ struct FunctionWrapper : public ModulePass {
     if (calledFunction == nullptr ||
         (!isa<ConstantExpr>(calledFunction) &&
          !isa<Function>(calledFunction)) ||
-        CS->getIntrinsicID() != Intrinsic::not_intrinsic) {
+        CS->getIntrinsicID() != Intrinsic::ID::not_intrinsic) {
       return nullptr;
     }
     if (Function *tmp = dyn_cast<Function>(calledFunction)) {
