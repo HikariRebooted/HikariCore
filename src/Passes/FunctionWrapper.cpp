@@ -122,8 +122,8 @@ struct FunctionWrapper : public ModulePass {
     } else {
       IRB.CreateRet(retval);
     }
-    CS->mutateFunctionType(ft);
     CS->setCalledFunction(func);
+    CS->mutateFunctionType(ft);
     Instruction *Inst = CS->getInstruction();
     delete CS;
     return new CallSite(Inst);
